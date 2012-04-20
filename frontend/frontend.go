@@ -22,7 +22,7 @@ const (
 )
 
 type Frontend struct {
-	tty *uart.TTY
+	tty uart.TTYish
 	Keypresses chan KeyPressEvent
 }
 
@@ -31,16 +31,20 @@ type KeyPressEvent struct {
 	Key string
 }
 
-func OpenFrontend(path string) (frontend *Frontend, err error) {
-	var e error
+func OpenFrontendish(ttyish uart.TTYish) *Frontend {
 	fe := new(Frontend)
 	fe.Keypresses = make(chan KeyPressEvent)
-	fe.tty, e = uart.OpenTTY(path, uart.B38400)
+	fe.tty = ttyish
+	go fe.readAndPing();
+	return fe
+}
+
+func OpenFrontend(path string) (frontend *Frontend, err error) {
+	ttyish, e := uart.OpenTTY(path, uart.B38400)
 	if e != nil {
 		return nil, e
 	}
-	go fe.readAndPing();
-	return fe, nil
+	return OpenFrontendish(ttyish), nil
 }
 
 // readAndPing takes care of reading bytes, filling a buffer and then sending
@@ -138,7 +142,3 @@ func (fe *Frontend) Beep(kind beepkind) error {
 
 // TODO: LED-Steuerung
 // TODO: LCD-Steuerung
-
-func (fe *Frontend) Close() {
-	fe.tty.Close()
-}

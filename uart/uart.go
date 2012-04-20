@@ -11,12 +11,17 @@ import (
 	"syscall"
 	"unsafe"
 	"errors"
+	"io"
 )
 
 type TTY struct {
 	os.File
 }
 
+type TTYish interface {
+	io.Reader
+	io.Writer
+}
 
 // termios types
 type cc_t byte
