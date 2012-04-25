@@ -55,7 +55,6 @@ func TestPinValidation(t *testing.T) {
 	hometec := make(chan string)
 	go ValidatePin(pins, frontend, hometec)
 
-	// TODO: gofmt
 	invalidPin := constructPinBuffer("1234")
 	validPin := constructPinBuffer("123456")
 
