@@ -2,12 +2,10 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"pinpad-controller/frontend"
 	"pinpad-controller/pinpad"
 	"pinpad-controller/pinstore"
-	"strings"
 )
 
 // Wir haben folgende Bestandteile:
@@ -32,5 +30,15 @@ func main() {
 		fmt.Println("cannot beep")
 	}
 
-	ValidatePin(pins, fe)
+	hometecControl := make(chan string)
+	go func() {
+		for {
+			command := <-hometecControl
+			switch command {
+			case "open":
+				fmt.Printf("should tell the hometec to open the door\n")
+			}
+		}
+	}()
+	pinpad.ValidatePin(pins, fe, hometecControl)
 }
