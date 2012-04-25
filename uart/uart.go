@@ -7,11 +7,11 @@
 package uart
 
 import (
+	"errors"
+	"io"
 	"os"
 	"syscall"
 	"unsafe"
-	"errors"
-	"io"
 )
 
 type TTY struct {
@@ -52,21 +52,21 @@ const (
 
 // termios constants
 const (
-    BRKINT = tcflag_t (0000002);
-    ICRNL = tcflag_t (0000400);
-    INPCK = tcflag_t (0000020);
-    ISTRIP = tcflag_t (0000040);
-    IXON = tcflag_t (0002000);
-    OPOST = tcflag_t (0000001);
-    CS8 = tcflag_t (0000060);
-    ECHO = tcflag_t (0000010);
-    ICANON = tcflag_t (0000002);
-    IEXTEN = tcflag_t (0100000);
-    ISIG = tcflag_t (0000001);
-    CBAUD = tcflag_t (0010017);
-    CIBAUD = tcflag_t (002003600000);
-    VTIME = tcflag_t (5);
-    VMIN = tcflag_t (6);
+	BRKINT = tcflag_t(0000002)
+	ICRNL  = tcflag_t(0000400)
+	INPCK  = tcflag_t(0000020)
+	ISTRIP = tcflag_t(0000040)
+	IXON   = tcflag_t(0002000)
+	OPOST  = tcflag_t(0000001)
+	CS8    = tcflag_t(0000060)
+	ECHO   = tcflag_t(0000010)
+	ICANON = tcflag_t(0000002)
+	IEXTEN = tcflag_t(0100000)
+	ISIG   = tcflag_t(0000001)
+	CBAUD  = tcflag_t(0010017)
+	CIBAUD = tcflag_t(002003600000)
+	VTIME  = tcflag_t(5)
+	VMIN   = tcflag_t(6)
 )
 
 const (
@@ -74,19 +74,20 @@ const (
 )
 
 const NCCS = 32
+
 type termios struct {
-    c_iflag, c_oflag, c_cflag, c_lflag tcflag_t;
-    c_line cc_t;
-    c_cc [NCCS]cc_t;
-    c_ispeed, c_ospeed speed_t
+	c_iflag, c_oflag, c_cflag, c_lflag tcflag_t
+	c_line                             cc_t
+	c_cc                               [NCCS]cc_t
+	c_ispeed, c_ospeed                 speed_t
 }
 
 // ioctl constants
 const (
-	TCGETS = 0x5401
-	TCSETS = 0x5402
-	TCSETSW = 0x5403
-	TCSETSF = 0x5404
+	TCGETS   = 0x5401
+	TCSETS   = 0x5402
+	TCSETSW  = 0x5403
+	TCSETSF  = 0x5404
 	TIOCMGET = 0x5415
 	TIOCMSET = 0x5418
 )
@@ -96,14 +97,14 @@ var fd uintptr
 func (tty *TTY) setTermios(src *termios) error {
 	fd := tty.Fd()
 	r1, _, _ := syscall.RawSyscall(syscall.SYS_IOCTL,
-                                     uintptr(fd), uintptr(TCSETSF),
-                                     uintptr(unsafe.Pointer(src)));
+		uintptr(fd), uintptr(TCSETSF),
+		uintptr(unsafe.Pointer(src)))
 
-    if r1 != 0 {
-        return errors.New("Error in TCSETS")
-    }
+	if r1 != 0 {
+		return errors.New("Error in TCSETS")
+	}
 
-    return nil
+	return nil
 }
 
 // We don’t need this right now using the usb2serial. Maybe on the Raspberry Pi
@@ -126,7 +127,7 @@ func (tty *TTY) setTermios(src *termios) error {
 //}
 
 func OpenTTY(path string, speed speed_t) (tty *TTY, err error) {
-	uartFile, e := os.OpenFile(path, os.O_RDWR | syscall.O_NOCTTY, 0)
+	uartFile, e := os.OpenFile(path, os.O_RDWR|syscall.O_NOCTTY, 0)
 	if e != nil {
 		return nil, e
 	}

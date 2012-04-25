@@ -7,22 +7,23 @@ package frontend
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
-	"time"
 	"pinpad-controller/uart"
-	"bytes"
 	"strings"
+	"time"
 )
 
 type beepkind uint
+
 const (
 	BEEP_LONG  = beepkind(0)
 	BEEP_SHORT = beepkind(1)
 )
 
 type Frontend struct {
-	tty uart.TTYish
+	tty        uart.TTYish
 	Keypresses chan KeyPressEvent
 }
 
@@ -35,7 +36,7 @@ func OpenFrontendish(ttyish uart.TTYish) *Frontend {
 	fe := new(Frontend)
 	fe.Keypresses = make(chan KeyPressEvent)
 	fe.tty = ttyish
-	go fe.readAndPing();
+	go fe.readAndPing()
 	return fe
 }
 
@@ -92,7 +93,7 @@ func (fe *Frontend) readAndPing() {
 	// TODO: keep track of pings so that we can detect packet loss
 	for {
 		select {
-		case nextByte := <- byteChannel:
+		case nextByte := <-byteChannel:
 			// If we are at the beginning of a buffer, we only accept the
 			// leading "^" byte.
 			if receiveBuffer.Len() == 0 && nextByte != '^' {
@@ -114,7 +115,7 @@ func (fe *Frontend) readAndPing() {
 			}
 			receiveBuffer.Reset()
 
-		case <- secondPassed:
+		case <-secondPassed:
 			fmt.Printf("a second passed, sending ping\n")
 			// TODO: Generate random value
 			fe.Ping("aa")
