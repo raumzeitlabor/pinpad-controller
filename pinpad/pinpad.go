@@ -28,17 +28,25 @@ func ValidatePin(ps *pinstore.Pinstore, fe *frontend.Frontend, ht chan string) {
 		pin := keypressBuffer.String()
 		keypressBuffer.Reset()
 
+		if pin == "666" {
+			fmt.Printf("Close pin\n")
+			ht <- "close"
+			continue
+		}
+
 		if len(pin) != 6 || !validPin.Match([]byte(pin)) {
 			fmt.Printf("Invalid PIN: %s\n", pin)
 			continue
 		}
 
 		// The pin is complete, let’s validate it.
-		fmt.Printf("got pin: %s\n", keypressBuffer.String())
-		if handle, ok := ps.Pins[keypressBuffer.String()]; ok {
+		fmt.Printf("got pin: %s\n", pin)
+		if handle, ok := ps.Pins[pin]; ok {
 			fmt.Printf("Successful login from %s\n", handle)
 			ht <- "open"
-			return
+			continue
 		}
+
+		fmt.Printf("No such PIN: %s\n", pin)
 	}
 }
