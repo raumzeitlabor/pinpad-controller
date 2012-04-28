@@ -6,6 +6,7 @@ import (
 	"pinpad-controller/frontend"
 	"pinpad-controller/pinpad"
 	"pinpad-controller/pinstore"
+	"pinpad-controller/hometec"
 )
 
 // Wir haben folgende Bestandteile:
@@ -23,22 +24,13 @@ import (
 
 func main() {
 	pins := pinstore.Load("/tmp/pins")
-	pins.Pins["1234"] = "secure"
+	pins.Pins["112233"] = "secure"
 
-	fe, _ := frontend.OpenFrontend("/dev/ttyUSB0")
+	fe, _ := frontend.OpenFrontend("/dev/ttyAMA0")
 	if e := fe.Beep(frontend.BEEP_SHORT); e != nil {
 		fmt.Println("cannot beep")
 	}
 
-	hometecControl := make(chan string)
-	go func() {
-		for {
-			command := <-hometecControl
-			switch command {
-			case "open":
-				fmt.Printf("should tell the hometec to open the door\n")
-			}
-		}
-	}()
-	pinpad.ValidatePin(pins, fe, hometecControl)
+	hometec, _ := hometec.OpenHometec()
+	pinpad.ValidatePin(pins, fe, hometec.Control)
 }
