@@ -20,7 +20,14 @@ func ValidatePin(ps *pinstore.Pinstore, fe *frontend.Frontend, ht chan string) {
 	for {
 		keypress := <-fe.Keypresses
 		b := []byte(keypress.Key)
+		fe.LED(1, 50)
+		fe.Beep(2)
 		if b[0] != byte('#') {
+			if keypressBuffer.Len() == 0 {
+				fe.LcdSet("PIN: *")
+			} else {
+				fe.LcdPut("*")
+			}
 			keypressBuffer.WriteByte(b[0])
 			continue
 		}
@@ -36,6 +43,8 @@ func ValidatePin(ps *pinstore.Pinstore, fe *frontend.Frontend, ht chan string) {
 
 		if len(pin) != 6 || !validPin.Match([]byte(pin)) {
 			fmt.Printf("Invalid PIN: %s\n", pin)
+			fe.LcdSet("Invalid PIN!")
+			fe.LED(2, 3000)
 			continue
 		}
 
@@ -43,6 +52,9 @@ func ValidatePin(ps *pinstore.Pinstore, fe *frontend.Frontend, ht chan string) {
 		fmt.Printf("got pin: %s\n", pin)
 		if handle, ok := ps.Pins[pin]; ok {
 			fmt.Printf("Successful login from %s\n", handle)
+			fe.LcdSet("Unlocking door...")
+			fe.LED(3, 3000)
+			fe.LED(2, 1)
 			ht <- "open"
 			continue
 		}

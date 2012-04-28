@@ -133,7 +133,8 @@ func (fe *Frontend) Ping(rnd string) error {
 }
 
 func (fe *Frontend) Beep(kind beepkind) error {
-	_, err := fe.tty.Write([]byte("^BEEP 1                              $"))
+	command := fmt.Sprintf("^BEEP %d                              $", kind)
+	_, err := fe.tty.Write([]byte(command))
 	if err != nil {
 		return err
 	}
@@ -141,5 +142,42 @@ func (fe *Frontend) Beep(kind beepkind) error {
 	return nil
 }
 
-// TODO: LED-Steuerung
-// TODO: LCD-Steuerung
+func (fe *Frontend) LcdSet(text string) error {
+	maxlength := len("^LCD $") + 32
+	command := fmt.Sprintf("^LCD %s", text)
+	for (len(command) < maxlength) {
+		command = fmt.Sprintf("%s ", command)
+	}
+	command = fmt.Sprintf("%s$", command)
+	_, err := fe.tty.Write([]byte(command))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (fe *Frontend) LcdPut(char string) error {
+	command := fmt.Sprintf("^LCH %s                               $", char)
+	_, err := fe.tty.Write([]byte(command))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (fe *Frontend) LED(idx int, duration int) error {
+	maxlength := len("^LED $") + 32
+	command := fmt.Sprintf("^LED %d %d", idx, duration)
+	for (len(command) < maxlength) {
+		command = fmt.Sprintf("%s ", command)
+	}
+	command = fmt.Sprintf("%s$", command)
+	_, err := fe.tty.Write([]byte(command))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
