@@ -93,14 +93,70 @@ func (hometec *Hometec) readControlChannel() {
 	}
 }
 
-func (hometec *Hometec) Open() {
+// Stilbruch: Deutsche Funktionsnamen. Ist aber sinnig, damit man versteht, was
+// hier geschieht.
+
+// Startet den Einkopplungs-Motor. Dieser Motor sorgt dafür, dass der
+// Haupt-motor, der dann tatsächlich den Schlüssel dreht, eingekoppelt wird.
+// Wenn er nicht eingekoppelt ist, kann man von Hand am Rad drehen, also die
+// Tür mit einem Schlüssel ganz normal aufschließen.
+func einkoppelnStarten() {
 	gpioSet(22, 0)
 	gpioSet(9, 0)
 	gpioSet(10, 0)
-	time.Sleep(3 * time.Second)
+}
+
+// Stoppt den Einkopplungs-Motor.
+func einkoppelnStoppen() {
 	gpioSet(22, 1)
 	gpioSet(9, 1)
 	gpioSet(10, 1)
+}
+
+func drehenStarten() {
+	gpioSet(1, 0)
+	gpioSet(17, 0)
+	gpioSet(4, 0)
+}
+
+func drehenStoppen() {
+	gpioSet(1, 1)
+	gpioSet(17, 1)
+	gpioSet(4, 1)
+}
+
+func auskoppelnStarten() {
+	gpioSet(11, 0)
+	gpioSet(9, 0)
+	gpioSet(10, 0)
+}
+
+func auskoppelnStoppen() {
+	gpioSet(11, 1)
+	gpioSet(9, 1)
+	gpioSet(10, 1)
+}
+
+func (hometec *Hometec) Open() {
+	// Den Dreh-Motor starten, dann 50ms warten, damit er auch läuft.
+	drehenStarten()
+	time.Sleep(50 * time.Millisecond)
+
+	// Für 100ms einkoppeln.
+	einkoppelnStarten()
+	time.Sleep(100 * time.Millisecond)
+	einkoppelnStoppen()
+
+	// Nun dreht der Motor den Schlüssel.
+	// TODO: solange drehen, bis offen ist, nicht immer 2 sekunden
+	time.Sleep(2 * time.Second)
+	drehenStoppen()
+	time.Sleep(50 * time.Millisecond)
+
+	// Jetzt für 100ms auskoppeln.
+	auskoppelnStarten()
+	time.Sleep(100 * time.Millisecond)
+	auskoppelnStoppen()
 }
 
 func (hometec *Hometec) Close() {
