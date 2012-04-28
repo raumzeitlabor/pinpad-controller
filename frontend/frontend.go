@@ -124,7 +124,7 @@ func (fe *Frontend) readAndPing() {
 }
 
 func (fe *Frontend) Ping(rnd string) error {
-	_, err := fe.tty.Write([]byte("^PING cc$"))
+	_, err := fe.tty.Write([]byte("^PING cc                             $"))
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (fe *Frontend) Ping(rnd string) error {
 }
 
 func (fe *Frontend) Beep(kind beepkind) error {
-	_, err := fe.tty.Write([]byte("^BEEP 1 $"))
+	_, err := fe.tty.Write([]byte("^BEEP 1                              $"))
 	if err != nil {
 		return err
 	}
