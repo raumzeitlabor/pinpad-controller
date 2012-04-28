@@ -8,6 +8,7 @@ import (
 	"log"
 	"encoding/gob"
 	"os"
+	"syscall"
 )
 
 type Pinstore struct {
@@ -22,7 +23,7 @@ func Load(filename string) (result *Pinstore) {
 
 	// Check if the file exists and load it, if so. Otherwise, create a new file.
 	if _, err := os.Stat(filename); err != nil {
-		if e, ok := err.(*os.PathError); ok && e.Err != os.ENOENT {
+		if e, ok := err.(*os.PathError); ok && e.Err != syscall.ENOENT {
 			log.Fatalf(`Error loading histogram data from "%s": %s`, filename, err)
 		} 
 
