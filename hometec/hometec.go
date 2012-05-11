@@ -101,45 +101,59 @@ func (hometec *Hometec) readControlChannel() {
 // Wenn er nicht eingekoppelt ist, kann man von Hand am Rad drehen, also die
 // Tür mit einem Schlüssel ganz normal aufschließen.
 func einkoppelnStarten() {
-	gpioSet(22, 0)
+	gpioSet(11, 0)
 	gpioSet(9, 0)
 	gpioSet(10, 0)
 }
 
 // Stoppt den Einkopplungs-Motor.
 func einkoppelnStoppen() {
-	gpioSet(22, 1)
+	gpioSet(11, 1)
 	gpioSet(9, 1)
 	gpioSet(10, 1)
 }
 
-func drehenStarten() {
+// Motor zum Öffnen drehen
+func aufdrehenStarten() {
 	gpioSet(1, 0)
 	gpioSet(17, 0)
 	gpioSet(4, 0)
 }
 
-func drehenStoppen() {
+func aufdrehenStoppen() {
 	gpioSet(1, 1)
 	gpioSet(17, 1)
 	gpioSet(4, 1)
 }
 
+// Motor zum Schließen drehen
+func zudrehenStarten() {
+	gpioSet(21, 0)
+	gpioSet(17, 0)
+	gpioSet(4, 0)
+}
+
+func zudrehenStoppen() {
+	gpioSet(21, 1)
+	gpioSet(17, 1)
+	gpioSet(4, 1)
+}
+
 func auskoppelnStarten() {
-	gpioSet(11, 0)
+	gpioSet(22, 0)
 	gpioSet(9, 0)
 	gpioSet(10, 0)
 }
 
 func auskoppelnStoppen() {
-	gpioSet(11, 1)
+	gpioSet(22, 1)
 	gpioSet(9, 1)
 	gpioSet(10, 1)
 }
 
 func (hometec *Hometec) Open() {
 	// Den Dreh-Motor starten, dann 50ms warten, damit er auch läuft.
-	drehenStarten()
+	aufdrehenStarten()
 	time.Sleep(50 * time.Millisecond)
 
 	// Für 100ms einkoppeln.
@@ -150,7 +164,7 @@ func (hometec *Hometec) Open() {
 	// Nun dreht der Motor den Schlüssel.
 	// TODO: solange drehen, bis offen ist, nicht immer 2 sekunden
 	time.Sleep(2 * time.Second)
-	drehenStoppen()
+	aufdrehenStoppen()
 	time.Sleep(50 * time.Millisecond)
 
 	// Jetzt für 100ms auskoppeln.
@@ -160,4 +174,23 @@ func (hometec *Hometec) Open() {
 }
 
 func (hometec *Hometec) Close() {
+	// Den Dreh-Motor starten, dann 50ms warten, damit er auch läuft.
+	zudrehenStarten()
+	time.Sleep(50 * time.Millisecond)
+
+	// Für 100ms einkoppeln.
+	einkoppelnStarten()
+	time.Sleep(100 * time.Millisecond)
+	einkoppelnStoppen()
+
+	// Nun dreht der Motor den Schlüssel.
+	// TODO: solange drehen, bis offen ist, nicht immer 2 sekunden
+	time.Sleep(2 * time.Second)
+	zudrehenStoppen()
+	time.Sleep(50 * time.Millisecond)
+
+	// Jetzt für 100ms auskoppeln.
+	auskoppelnStarten()
+	time.Sleep(100 * time.Millisecond)
+	auskoppelnStoppen()
 }
