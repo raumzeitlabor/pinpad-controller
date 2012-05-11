@@ -3,10 +3,12 @@ package main
 
 import (
 	"fmt"
+	"time"
 	"pinpad-controller/frontend"
 	"pinpad-controller/pinpad"
 	"pinpad-controller/pinstore"
 	"pinpad-controller/hometec"
+	"pinpad-controller/tuerstatus"
 )
 
 // Wir haben folgende Bestandteile:
@@ -32,5 +34,17 @@ func main() {
 	}
 
 	hometec, _ := hometec.OpenHometec()
+	tuerstatusChannel := make(chan tuerstatus.Tuerstatus)
+	go tuerstatus.TuerstatusPoll(tuerstatusChannel, 250 * time.Millisecond)
+	go func() {
+		for {
+			newStatus := <-tuerstatusChannel
+			if newStatus.Open {
+				fe.LcdSet("Open")
+			} else {
+				fe.LcdSet("Closed")
+			}
+		}
+	}()
 	pinpad.ValidatePin(pins, fe, hometec.Control)
 }

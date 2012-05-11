@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"pinpad-controller/frontend"
 	"pinpad-controller/pinstore"
+	"pinpad-controller/hometec"
 	"regexp"
 )
 
@@ -37,6 +38,9 @@ func ValidatePin(ps *pinstore.Pinstore, fe *frontend.Frontend, ht chan string) {
 
 		if pin == "666" {
 			fmt.Printf("Close pin\n")
+			fe.LcdSet("Locking door...")
+			fe.LED(3, 3000)
+			fe.LED(2, 1)
 			ht <- "close"
 			continue
 		}
