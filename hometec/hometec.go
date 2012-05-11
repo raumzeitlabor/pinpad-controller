@@ -15,6 +15,39 @@ type Hometec struct {
 	Control chan string
 }
 
+func gpioWaitFor(gpio int, wantedValue byte) bool {
+	path := fmt.Sprintf("/sys/class/gpio/gpio%d/value", gpio)
+	f, err := os.OpenFile(path, os.O_RDONLY, 0666)
+	if err != nil {
+		fmt.Printf("Could not open %s: %s\n", path, err)
+		os.Exit(1)
+	}
+	value := make([]byte, 1)
+	// Repeatedly read until we have the value we were looking for
+	for {
+		f.Seek(0, 0)
+		f.Read(value)
+		if value[0] == wantedValue {
+			return true
+		}
+		time.Sleep(250)
+	}
+	f.Close()
+	return false
+}
+
+func gpioWaitForWithTimeout(gpio int, wantedValue byte, timeout time.Duration) bool {
+	closed := make(chan bool)
+	go func() {
+		closed <- gpioWaitFor(gpio, wantedValue)
+	}()
+	go func() {
+		time.Sleep(timeout)
+		closed <- false
+	}()
+	return <-closed
+}
+
 func gpioExport(gpio int) {
 	f, err := os.OpenFile("/sys/class/gpio/export", os.O_WRONLY, 0666)
 	if err != nil {
@@ -29,7 +62,7 @@ func gpioSetDirection(gpio int, direction string) {
 	path := fmt.Sprintf("/sys/class/gpio/gpio%d/direction", gpio)
 	f, err := os.OpenFile(path, os.O_WRONLY, 0666)
 	if err != nil {
-		fmt.Printf("Could not open /sys/class/gpio/export: %s\n", err)
+		fmt.Printf("Could not open %s: %s\n", path, err)
 		os.Exit(1)
 	}
 	f.Write([]byte(fmt.Sprintf("%s\n", direction)))
@@ -40,7 +73,7 @@ func gpioSet(gpio int, value int) {
 	path := fmt.Sprintf("/sys/class/gpio/gpio%d/value", gpio)
 	f, err := os.OpenFile(path, os.O_WRONLY, 0666)
 	if err != nil {
-		fmt.Printf("Could not open /sys/class/gpio/export: %s\n", err)
+		fmt.Printf("Could not open %s: %s\n", path, err)
 		os.Exit(1)
 	}
 	f.Write([]byte(fmt.Sprintf("%d\n", value)))
@@ -162,8 +195,9 @@ func (hometec *Hometec) Open() {
 	einkoppelnStoppen()
 
 	// Nun dreht der Motor den Schlüssel.
-	// TODO: solange drehen, bis offen ist, nicht immer 2 sekunden
-	time.Sleep(2 * time.Second)
+	gpioWaitForWithTimeout(25, '1', 9 * time.Second)
+	// Noch eine halbe Sekunde mehr drehen, damit auch wirklich offen ist
+	time.Sleep(500 * time.Millisecond)
 	aufdrehenStoppen()
 	time.Sleep(50 * time.Millisecond)
 
@@ -184,8 +218,9 @@ func (hometec *Hometec) Close() {
 	einkoppelnStoppen()
 
 	// Nun dreht der Motor den Schlüssel.
-	// TODO: solange drehen, bis offen ist, nicht immer 2 sekunden
-	time.Sleep(2 * time.Second)
+	gpioWaitForWithTimeout(25, '0', 10 * time.Second)
+	// Noch eine halbe Sekunde mehr drehen, damit auch wirklich zu ist
+	time.Sleep(500 * time.Millisecond)
 	zudrehenStoppen()
 	time.Sleep(50 * time.Millisecond)
 
