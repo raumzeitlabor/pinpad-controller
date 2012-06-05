@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"pinpad-controller/frontend"
 	"pinpad-controller/pinstore"
-	"pinpad-controller/hometec"
+	"pinpad-controller/tuerstatus"
 	"regexp"
+	"time"
 )
 
 // Valid Pins consist of numbers only
@@ -49,6 +50,14 @@ func ValidatePin(ps *pinstore.Pinstore, fe *frontend.Frontend, ht chan string) {
 			fmt.Printf("Invalid PIN: %s\n", pin)
 			fe.LcdSet("Invalid PIN!")
 			fe.LED(2, 3000)
+			go func() {
+				time.Sleep(2 * time.Second)
+				if tuerstatus.CurrentStatus().Open {
+					fe.LcdSet(" \nOpen")
+				} else {
+					fe.LcdSet(" \nClosed")
+				}
+			}()
 			continue
 		}
 

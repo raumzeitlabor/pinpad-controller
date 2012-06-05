@@ -48,3 +48,18 @@ func TuerstatusPoll(tuerstatus chan Tuerstatus, delay time.Duration) {
 		tuerstatus <- newStatus
 	}
 }
+
+func CurrentStatus() Tuerstatus {
+	path := fmt.Sprintf("/sys/class/gpio/gpio%d/value", 25)
+	f, err := os.OpenFile(path, os.O_RDONLY, 0666)
+	if err != nil {
+		fmt.Printf("Could not open %s: %s\n", path, err)
+		os.Exit(1)
+	}
+	defer f.Close()
+	value := make([]byte, 1)
+	// Repeatedly read until we have the value we were looking for
+	f.Seek(0, 0)
+	f.Read(value)
+	return Tuerstatus{Open: (value[0] == '1')}
+}
