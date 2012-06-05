@@ -40,9 +40,9 @@ func main() {
 		for {
 			newStatus := <-tuerstatusChannel
 			if newStatus.Open {
-				fe.LcdSet("Open")
+				fe.LcdSet(" \nOpen")
 			} else {
-				fe.LcdSet("Closed")
+				fe.LcdSet(" \nClosed")
 			}
 		}
 	}()
