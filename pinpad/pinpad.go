@@ -14,6 +14,20 @@ import (
 // Valid Pins consist of numbers only
 var validPin, _ = regexp.Compile("^[0-9]+$")
 
+func invalidPin(pin string, fe *frontend.Frontend) {
+	fmt.Printf("Invalid PIN: %s\n", pin)
+	fe.LcdSet("Invalid PIN!")
+	fe.LED(2, 3000)
+	go func() {
+		time.Sleep(2 * time.Second)
+		if tuerstatus.CurrentStatus().Open {
+			fe.LcdSet(" \nOpen")
+		} else {
+			fe.LcdSet(" \nClosed")
+		}
+	}()
+}
+
 // Reads keypresses from the specified frontend, verifies entered pins using
 // the given pinstore and sends open/close commands to the specified hometec
 // channel.
@@ -47,17 +61,7 @@ func ValidatePin(ps *pinstore.Pinstore, fe *frontend.Frontend, ht chan string) {
 		}
 
 		if len(pin) != 6 || !validPin.Match([]byte(pin)) {
-			fmt.Printf("Invalid PIN: %s\n", pin)
-			fe.LcdSet("Invalid PIN!")
-			fe.LED(2, 3000)
-			go func() {
-				time.Sleep(2 * time.Second)
-				if tuerstatus.CurrentStatus().Open {
-					fe.LcdSet(" \nOpen")
-				} else {
-					fe.LcdSet(" \nClosed")
-				}
-			}()
+			invalidPin(pin, fe)
 			continue
 		}
 
@@ -73,5 +77,6 @@ func ValidatePin(ps *pinstore.Pinstore, fe *frontend.Frontend, ht chan string) {
 		}
 
 		fmt.Printf("No such PIN: %s\n", pin)
+		invalidPin(pin, fe)
 	}
 }
