@@ -5,41 +5,90 @@
 package pinstore
 
 import (
-	"log"
-	"encoding/gob"
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"path"
 	"syscall"
 )
 
-type Pinstore struct {
-	filename string
-	Pins map[string]string
+// This type is used temporarily when decoding the JSON only.
+type pin struct {
+	Handle string
+	Pin    string
 }
 
-func Load(filename string) (result *Pinstore) {
-	result = new(Pinstore)
+type Pinstore struct {
+	filename string
+	Pins     map[string]string
+}
+
+func Load(filename string) (*Pinstore, error) {
+	result := new(Pinstore)
 	result.filename = filename
 	result.Pins = make(map[string]string, 0)
 
 	// Check if the file exists and load it, if so. Otherwise, create a new file.
 	if _, err := os.Stat(filename); err != nil {
+		// ENOENT is okay (we create a new file), but anything else is not.
 		if e, ok := err.(*os.PathError); ok && e.Err != syscall.ENOENT {
-			log.Fatalf(`Error loading histogram data from "%s": %s`, filename, err)
-		} 
-
-		// Err == os.ENOENT, this is ok.
-	} else {
-		file, err := os.Open(filename)
-		if err != nil {
-			log.Fatalf(`Error reading histogram data from "%s": %s`, filename, err)
+			return nil, err
 		}
-		defer file.Close()
+	} else {
+		// Read the whole file into pinContents
+		pinContents, err := ioutil.ReadFile(filename)
+		if err != nil {
+			return nil, err
+		}
 
-		decoder := gob.NewDecoder(file)
-		if err := decoder.Decode(&result); err != nil {
-			log.Fatalf(`Could not load histogram from "%s": %s`, filename, err)
+		// The file is JSON encoded, so unmarshal it into the pins array first…
+		var pins []pin
+		if err := json.Unmarshal(pinContents, &pins); err != nil {
+			return nil, err
+		}
+
+		// …then fill the Pins map for convenience
+		for _, pin := range pins {
+			result.Pins[pin.Pin] = pin.Handle
 		}
 	}
 
-	return result
+	return result, nil
+}
+
+// Safely updates the pinstore contents with the contents from 'url'.
+func (ps *Pinstore) Update(url string) (err error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	// Save the new pins to a new file
+	file, err := ioutil.TempFile(path.Dir(ps.filename), path.Base(ps.filename)+".new")
+	if err != nil {
+		return
+	}
+	if _, err = file.Write(body); err != nil {
+		return
+	}
+
+	// Try to load the new file and copy the pins over if successful
+	newStore, err := Load(file.Name())
+	if err != nil {
+		return
+	}
+
+	ps.Pins = newStore.Pins
+
+	// Then rename the new file to the old name
+	err = os.Rename(file.Name(), ps.filename)
+
+	return
 }
