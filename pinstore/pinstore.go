@@ -5,13 +5,19 @@
 package pinstore
 
 import (
+	"bytes"
 	"encoding/json"
+	"hash/crc32"
+	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path"
 	"syscall"
 )
+
+var lastChecksum []byte
 
 // This type is used temporarily when decoding the JSON only.
 type pin struct {
@@ -65,10 +71,24 @@ func (ps *Pinstore) Update(url string) (err error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	// To save some I/O (we’re on a SD card!) we calculate the hash of the
+	// contents while we read them and then discard the update in case it has
+	// the same content.
+	checksum := crc32.NewIEEE()
+	teeReader := io.TeeReader(resp.Body, checksum)
+
+	body, err := ioutil.ReadAll(teeReader)
 	if err != nil {
 		return
 	}
+
+	if bytes.Compare(checksum.Sum(nil), lastChecksum) == 0 {
+		return
+	}
+
+	lastChecksum = checksum.Sum(nil)
+
+	log.Printf("PINs changed, new CRC32: %x", lastChecksum)
 
 	// Save the new pins to a new file
 	file, err := ioutil.TempFile(path.Dir(ps.filename), path.Base(ps.filename)+".new")
