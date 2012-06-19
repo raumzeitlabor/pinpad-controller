@@ -3,6 +3,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"flag"
 	"time"
 	"pinpad-controller/frontend"
 	"pinpad-controller/pinpad"
@@ -10,6 +12,16 @@ import (
 	"pinpad-controller/hometec"
 	"pinpad-controller/tuerstatus"
 )
+
+var pin_url *string = flag.String(
+	"pin_url",
+	"https://blackbox.raumzeitlabor.de/BenutzerDB/pins/getraenkelager",
+	"URL to load the PINs from")
+
+var pin_path *string = flag.String(
+	"pin_path",
+	"/perm/pins.json",
+	"Path to store the PINs permanently")
 
 // Wir haben folgende Bestandteile:
 // 1) Das Frontend
@@ -24,9 +36,25 @@ import (
 //    dann verbasteln.
 //    Kann man inotify auf /sys machen mit den GPIOs?
 
+func updatePins(pins *pinstore.Pinstore) {
+	for {
+		time.Sleep(1 * time.Minute)
+		pins.Update(*pin_url)
+	}
+}
+
 func main() {
-	pins := pinstore.Load("/tmp/pins")
-	pins.Pins["112233"] = "secure"
+	flag.Parse()
+
+	pins, err := pinstore.Load(*pin_path)
+	if err != nil {
+		log.Fatalf("Could not load pins: %v", err)
+	}
+	if err := pins.Update(*pin_url); err != nil {
+		fmt.Printf("Cannot update pins: %v\n", err)
+	}
+
+	go updatePins(pins)
 
 	fe, _ := frontend.OpenFrontend("/dev/ttyAMA0")
 	if e := fe.Beep(frontend.BEEP_SHORT); e != nil {
