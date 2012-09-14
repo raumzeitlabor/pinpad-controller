@@ -3,6 +3,9 @@
 //
 // This package implements the protocol to speak with the hometec and provides
 // high-level methods.
+//
+// gpio7: in der tür, 1 == 2x abgeschlossen
+// gpio8: in der tür, 1 == offen, 0 == 2x zu
 package hometec
 
 import (
@@ -195,9 +198,9 @@ func (hometec *Hometec) Open() {
 	einkoppelnStoppen()
 
 	// Nun dreht der Motor den Schlüssel.
-	gpioWaitForWithTimeout(25, '1', 9 * time.Second)
+	gpioWaitForWithTimeout(7, '0', 9 * time.Second)
 	// Noch eine halbe Sekunde mehr drehen, damit auch wirklich offen ist
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(3000 * time.Millisecond)
 	aufdrehenStoppen()
 	time.Sleep(50 * time.Millisecond)
 
@@ -218,7 +221,7 @@ func (hometec *Hometec) Close() {
 	einkoppelnStoppen()
 
 	// Nun dreht der Motor den Schlüssel.
-	gpioWaitForWithTimeout(25, '0', 10 * time.Second)
+	gpioWaitForWithTimeout(7, '1', 4 * time.Second)
 	// Noch eine halbe Sekunde mehr drehen, damit auch wirklich zu ist
 	time.Sleep(500 * time.Millisecond)
 	zudrehenStoppen()
