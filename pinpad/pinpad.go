@@ -52,7 +52,7 @@ func ValidatePin(ps *pinstore.Pinstore, fe *frontend.Frontend, ht chan string) {
 		keypressBuffer.Reset()
 
 		if pin == "666" {
-			fmt.Printf("Close pin\n")
+			fmt.Printf("Got close pin, locking door\n")
 			fe.LcdSet("Locking door...")
 			fe.LED(3, 3000)
 			fe.LED(2, 1)
@@ -66,9 +66,8 @@ func ValidatePin(ps *pinstore.Pinstore, fe *frontend.Frontend, ht chan string) {
 		}
 
 		// The pin is complete, let’s validate it.
-		fmt.Printf("got pin: %s\n", pin)
 		if handle, ok := ps.Pins[pin]; ok {
-			fmt.Printf("Successful login from %s\n", handle)
+			fmt.Printf("%s unlocked the door\n", handle)
 			fe.LcdSet("Unlocking door...")
 			fe.LED(3, 3000)
 			fe.LED(2, 1)

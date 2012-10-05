@@ -107,7 +107,7 @@ func (fe *Frontend) readAndPing() {
 			}
 			packet := receiveBuffer.String()
 			if strings.HasPrefix(packet, "^PONG ") {
-				fmt.Println("got a PONG reply :)")
+				fmt.Println("pinpad-frontend PONGed")
 			} else if strings.HasPrefix(packet, "^PAD ") {
 				var event KeyPressEvent
 				event.Key = string(receiveBuffer.Bytes()[5])
@@ -116,7 +116,6 @@ func (fe *Frontend) readAndPing() {
 			receiveBuffer.Reset()
 
 		case <-secondPassed:
-			fmt.Printf("a second passed, sending ping\n")
 			// TODO: Generate random value
 			fe.Ping("aa")
 		}
