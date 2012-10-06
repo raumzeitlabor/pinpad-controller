@@ -75,8 +75,8 @@ func (fe *Frontend) readAndPing() {
 		for {
 			nextByte, err := reader.ReadByte()
 			if err != nil {
-				// TODO: proper error handling
-				fmt.Printf("err: %s\n", err)
+				fmt.Printf("Error reading from the serial interface: %s\n", err)
+				fmt.Printf("Do you have console=ttyS0 in your kernel cmdline maybe?\n")
 				os.Exit(1)
 			}
 
