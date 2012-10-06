@@ -9,6 +9,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"math/rand"
 	"os"
 	"pinpad-controller/uart"
 	"strings"
@@ -90,7 +91,11 @@ func (fe *Frontend) readAndPing() {
 	}()
 
 	var receiveBuffer bytes.Buffer
-	// TODO: keep track of pings so that we can detect packet loss
+	// Stores the PING value we sent to the frontend. Will be checked before
+	// sending the next value so that we can detect packet loss. If this is the
+	// empty string, the frontend PONGed, otherwise it contains the value we
+	// sent but did not get acknowledged.
+	previousPing := ""
 	for {
 		select {
 		case nextByte := <-byteChannel:
@@ -107,7 +112,12 @@ func (fe *Frontend) readAndPing() {
 			}
 			packet := receiveBuffer.String()
 			if strings.HasPrefix(packet, "^PONG ") {
-				fmt.Println("pinpad-frontend PONGed")
+				pong := packet[len("^PONG ") : len("^PONG ")+2]
+				if pong != previousPing {
+					fmt.Printf("pinpad-frontend sent %s, but we expected %s\n", pong, previousPing)
+				}
+				// Clear previous ping, that means it was acknowledged
+				previousPing = ""
 			} else if strings.HasPrefix(packet, "^PAD ") {
 				var event KeyPressEvent
 				event.Key = string(receiveBuffer.Bytes()[5])
@@ -116,14 +126,18 @@ func (fe *Frontend) readAndPing() {
 			receiveBuffer.Reset()
 
 		case <-secondPassed:
-			// TODO: Generate random value
-			fe.Ping("aa")
+			if previousPing != "" {
+				fmt.Printf("pinpad-frontend did not PONG %s\n", previousPing)
+			}
+			// 58 is the amount of (printable) characters from '@' to 'z'.
+			previousPing = fmt.Sprintf("%c%c", rand.Int31n(58)+'@', rand.Int31n(58)+'@')
+			fe.Ping(previousPing)
 		}
 	}
 }
 
 func (fe *Frontend) Ping(rnd string) error {
-	_, err := fe.tty.Write([]byte("^PING cc                             $"))
+	_, err := fe.tty.Write([]byte(fmt.Sprintf("^PING %s                             $", rnd)))
 	if err != nil {
 		return err
 	}
@@ -144,7 +158,7 @@ func (fe *Frontend) Beep(kind beepkind) error {
 func (fe *Frontend) LcdSet(text string) error {
 	maxlength := len("^LCD $") + 32
 	command := fmt.Sprintf("^LCD %s", text)
-	for (len(command) < maxlength) {
+	for len(command) < maxlength {
 		command = fmt.Sprintf("%s ", command)
 	}
 	command = fmt.Sprintf("%s$", command)
@@ -169,7 +183,7 @@ func (fe *Frontend) LcdPut(char string) error {
 func (fe *Frontend) LED(idx int, duration int) error {
 	maxlength := len("^LED $") + 32
 	command := fmt.Sprintf("^LED %d %d", idx, duration)
-	for (len(command) < maxlength) {
+	for len(command) < maxlength {
 		command = fmt.Sprintf("%s ", command)
 	}
 	command = fmt.Sprintf("%s$", command)
