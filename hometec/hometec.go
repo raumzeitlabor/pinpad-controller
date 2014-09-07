@@ -1,12 +1,15 @@
 // vim:ts=4:sw=4:noexpandtab
 // © 2012 Michael Stapelberg (see also: LICENSE)
+// © 2014 Simon Elsbrock (see also: LICENSE)
 //
 // This package implements the protocol to speak with the hometec and provides
 // high-level methods.
 //
-// gpio7: im türramén, 1 == 2x abgeschlossen
+// gpio7: im türramén, 1 == abgeschlossen
 // gpio8: in der tür, 1 == offen, 0 == 2x zu
 // gpio24: in der tür, 1 == zu, 0 == offen
+//
+// haupttür hat anders als lagertür nur eine schließumdrehung.
 package hometec
 
 import (
@@ -83,6 +86,20 @@ func gpioSet(gpio int, value int) {
 	}
 	f.Write([]byte(fmt.Sprintf("%d\n", value)))
 	f.Close()
+}
+
+func gpioGet(gpio int) []byte {
+	path := fmt.Sprintf("/sys/class/gpio/gpio%d/value", gpio)
+	f, err := os.OpenFile(path, os.O_RDONLY, 0666)
+	if err != nil {
+		fmt.Printf("Could not open %s: %s\n", path, err)
+		os.Exit(1)
+	}
+	value := make([]byte, 1)
+	f.Seek(0, 0)
+	f.Read(value)
+	f.Close()
+	return value
 }
 
 func OpenHometec() (hometec *Hometec, err error) {
@@ -190,6 +207,11 @@ func auskoppelnStoppen() {
 }
 
 func (hometec *Hometec) Open() {
+	// Gar nicht erst aufschließen, wenn schon offen
+	if gpioGet(8)[0] == '0' {
+		return
+	}
+
 	// Den Dreh-Motor starten, dann 50ms warten, damit er auch läuft.
 	aufdrehenStarten()
 	time.Sleep(50 * time.Millisecond)
@@ -213,6 +235,11 @@ func (hometec *Hometec) Open() {
 }
 
 func (hometec *Hometec) Close() {
+	// Gar nicht erst zuschließen, wenn schon zu
+	if gpioGet(24)[0] == '0' {
+		return
+	}
+
 	// Den Dreh-Motor starten, dann 50ms warten, damit er auch läuft.
 	zudrehenStarten()
 	time.Sleep(50 * time.Millisecond)
@@ -224,8 +251,6 @@ func (hometec *Hometec) Close() {
 
 	// Nun dreht der Motor den Schlüssel.
 	gpioWaitForWithTimeout(24, '0', 2 * time.Second)
-	// Noch eine halbe Sekunde mehr drehen, damit auch wirklich zu ist
-	//time.Sleep(500 * time.Millisecond)
 	zudrehenStoppen()
 	time.Sleep(50 * time.Millisecond)
 
