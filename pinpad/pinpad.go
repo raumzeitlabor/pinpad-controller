@@ -51,7 +51,7 @@ func ValidatePin(ps *pinstore.Pinstore, fe *frontend.Frontend, ht chan string) {
 		pin := keypressBuffer.String()
 		keypressBuffer.Reset()
 
-		if pin == "666" {
+		if pin == "666" || pin == "*" {
 			fmt.Printf("Got close pin, locking door\n")
 			fe.LcdSet("Locking door...")
 			fe.LED(3, 3000)
