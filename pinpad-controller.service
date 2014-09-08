@@ -1,0 +1,10 @@
+[Unit]
+Description=Pinpad Controller
+After=networking.target
+
+[Service]
+ExecStart=/usr/bin/pinpad-controller -pin_url=https://USER:PASSWD@infra.rzl/BenutzerDB/pins/haupttuer
+StandardOutput=syslog
+
+[Install]
+WantedBy=multi-user.target
