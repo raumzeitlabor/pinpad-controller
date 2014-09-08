@@ -68,7 +68,7 @@ func ValidatePin(ps *pinstore.Pinstore, fe *frontend.Frontend, ht chan string) {
 		// The pin is complete, let’s validate it.
 		if handle, ok := ps.Pins[pin]; ok {
 			fmt.Printf("%s unlocked the door\n", handle)
-			fe.LcdSet("Unlocking door...")
+			fe.LcdSet(fmt.Sprintf("Welcome, %s!\nUnlocking door...", handle))
 			fe.LED(3, 3000)
 			fe.LED(2, 1)
 			ht <- "open"
