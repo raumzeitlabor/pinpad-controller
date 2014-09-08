@@ -15,7 +15,7 @@ import (
 
 var pin_url *string = flag.String(
 	"pin_url",
-	"https://blackbox.raumzeitlabor.de/BenutzerDB/pins/getraenkelager",
+	"http://infra.rzl/BenutzerDB/pins/haupttuer",
 	"URL to load the PINs from")
 
 var pin_path *string = flag.String(
