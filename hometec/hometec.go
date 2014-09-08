@@ -208,7 +208,7 @@ func auskoppelnStoppen() {
 
 func (hometec *Hometec) Open() {
 	// Gar nicht erst aufschließen, wenn schon offen
-	if gpioGet(8)[0] == '0' {
+	if gpioGet(8)[0] == '0' && gpioGet(24)[0] == '1' {
 		return
 	}
 
@@ -223,8 +223,7 @@ func (hometec *Hometec) Open() {
 
 	// Nun dreht der Motor den Schlüssel.
 	gpioWaitForWithTimeout(8, '0', 4 * time.Second)
-	// Noch eine halbe Sekunde mehr drehen, damit auch wirklich offen ist
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 	aufdrehenStoppen()
 	time.Sleep(50 * time.Millisecond)
 
@@ -236,7 +235,7 @@ func (hometec *Hometec) Open() {
 
 func (hometec *Hometec) Close() {
 	// Gar nicht erst zuschließen, wenn schon zu
-	if gpioGet(24)[0] == '0' {
+	if gpioGet(24)[0] == '0' || gpioGet(8)[0] == '1' {
 		return
 	}
 
@@ -250,7 +249,8 @@ func (hometec *Hometec) Close() {
 	einkoppelnStoppen()
 
 	// Nun dreht der Motor den Schlüssel.
-	gpioWaitForWithTimeout(24, '0', 2 * time.Second)
+	gpioWaitForWithTimeout(24, '0', 4 * time.Second)
+	time.Sleep(500 * time.Millisecond)
 	zudrehenStoppen()
 	time.Sleep(50 * time.Millisecond)
 
