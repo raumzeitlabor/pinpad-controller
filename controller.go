@@ -37,25 +37,15 @@ var pin_path *string = flag.String(
 //    dann verbasteln.
 //    Kann man inotify auf /sys machen mit den GPIOs?
 
-func updatePins(pins *pinstore.Pinstore) {
+func updatePins(pins *pinstore.Pinstore, fe *frontend.Frontend) {
 	for {
 		time.Sleep(1 * time.Minute)
-		pins.Update(*pin_url)
+		pins.Update(*pin_url, fe)
 	}
 }
 
 func main() {
 	flag.Parse()
-
-	pins, err := pinstore.Load(*pin_path)
-	if err != nil {
-		log.Fatalf("Could not load pins: %v", err)
-	}
-	if err := pins.Update(*pin_url); err != nil {
-		fmt.Printf("Cannot update pins: %v\n", err)
-	}
-
-	go updatePins(pins)
 
 	fe, _ := frontend.OpenFrontend("/dev/ttyAMA0")
 	if e := fe.Beep(frontend.BEEP_SHORT); e != nil {
@@ -75,6 +65,16 @@ func main() {
 			}
 		}
 	}()
+
+	pins, err := pinstore.Load(*pin_path)
+	if err != nil {
+		log.Fatalf("Could not load pins: %v", err)
+	}
+	if err := pins.Update(*pin_url, fe); err != nil {
+		fmt.Printf("Cannot update pins: %v\n", err)
+	}
+
+	go updatePins(pins, fe)
 
 	ctrlsocket.Listen(fe, hometec.Control)
 	pinpad.ValidatePin(pins, fe, hometec.Control)
