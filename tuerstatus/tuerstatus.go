@@ -40,7 +40,7 @@ func gpioPoll(gpio int, output chan byte, delay time.Duration) {
 // Polls the various sensors and writes an aggregated status to the channel
 func TuerstatusPoll(tuerstatus chan Tuerstatus, delay time.Duration) {
 	gpioValues := make(chan byte)
-	go gpioPoll(25, gpioValues, delay)
+	go gpioPoll(24, gpioValues, delay)
 	for {
 		newValue := <-gpioValues
 		var newStatus Tuerstatus
