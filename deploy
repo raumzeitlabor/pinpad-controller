@@ -1,0 +1,5 @@
+#!/bin/sh
+
+ssh root@pinpad-main "systemctl stop pinpad-controller.service"
+scp pinpad-controller root@pinpad-main:/usr/bin/
+ssh root@pinpad-main "systemctl start pinpad-controller.service"
