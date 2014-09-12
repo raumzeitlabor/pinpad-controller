@@ -10,6 +10,7 @@ import (
 	"pinpad-controller/pinpad"
 	"pinpad-controller/pinstore"
 	"pinpad-controller/hometec"
+	"pinpad-controller/ctrlsocket"
 	"pinpad-controller/tuerstatus"
 )
 
@@ -74,5 +75,7 @@ func main() {
 			}
 		}
 	}()
+
+	ctrlsocket.Listen(fe, hometec.Control)
 	pinpad.ValidatePin(pins, fe, hometec.Control)
 }
