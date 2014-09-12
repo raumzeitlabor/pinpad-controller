@@ -112,6 +112,7 @@ func (ps *Pinstore) Update(url string, fe *frontend.Frontend) (err error) {
 	}
 
 	if bytes.Compare(checksum.Sum(nil), lastChecksum) == 0 {
+        lastSyncState = true
 		return
 	}
 
