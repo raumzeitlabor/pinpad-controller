@@ -37,8 +37,8 @@ func gpioWaitFor(gpio int, wantedValue byte) bool {
 		if value[0] == wantedValue {
 			return true
 		}
-		fmt.Printf("pin %d state: %s\n", gpio, value)
-		time.Sleep(250)
+		//fmt.Printf("pin %d state: %s\n", gpio, value)
+		time.Sleep(50) // Check state every 50ms
 	}
 	f.Close()
 	return false
@@ -223,7 +223,7 @@ func (hometec *Hometec) Open() {
 
 	// Nun dreht der Motor den Schlüssel.
 	gpioWaitForWithTimeout(8, '0', 4 * time.Second)
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	aufdrehenStoppen()
 	time.Sleep(50 * time.Millisecond)
 
@@ -250,7 +250,7 @@ func (hometec *Hometec) Close() {
 
 	// Nun dreht der Motor den Schlüssel.
 	gpioWaitForWithTimeout(24, '0', 4 * time.Second)
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	zudrehenStoppen()
 	time.Sleep(50 * time.Millisecond)
 
