@@ -15,8 +15,12 @@ import (
 	"os"
 	"path"
 	"syscall"
+    "fmt"
+    "time"
+    "pinpad-controller/frontend"
 )
 
+var lastSyncState bool = false
 var lastChecksum []byte
 
 // This type is used temporarily when decoding the JSON only.
@@ -63,10 +67,24 @@ func Load(filename string) (*Pinstore, error) {
 	return result, nil
 }
 
+func indicateSyncFail(fe *frontend.Frontend) {
+    for {
+        if (lastSyncState == true) {
+            return;
+        }
+        fe.LED(2, 1000)
+        fe.Beep(2)
+        time.Sleep(2 * time.Second)
+    }
+}
+
 // Safely updates the pinstore contents with the contents from 'url'.
-func (ps *Pinstore) Update(url string) (err error) {
+func (ps *Pinstore) Update(url string, fe *frontend.Frontend) (err error) {
+    fmt.Printf("pinstore: trying to sync PINs\n")
+
 	resp, err := http.Get(url)
 	if err != nil {
+        fmt.Printf("pinstore: could not sync PINs: %s\n", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -79,6 +97,9 @@ func (ps *Pinstore) Update(url string) (err error) {
 
 	body, err := ioutil.ReadAll(teeReader)
 	if err != nil {
+        fmt.Printf("pinstore: could not sync PINs: %s\n", err)
+        lastSyncState = false
+        go indicateSyncFail(fe)
 		return
 	}
 
@@ -93,15 +114,25 @@ func (ps *Pinstore) Update(url string) (err error) {
 	// Save the new pins to a new file
 	file, err := ioutil.TempFile(path.Dir(ps.filename), path.Base(ps.filename)+".new")
 	if err != nil {
+        fmt.Printf("pinstore: could not get tmpfile: %s\n", err)
+        lastSyncState = false
+        go indicateSyncFail(fe)
 		return
 	}
+
 	if _, err = file.Write(body); err != nil {
+        fmt.Printf("pinstore: could not write PINs to tmpfile: %s\n", err)
+        lastSyncState = false
+        go indicateSyncFail(fe)
 		return
 	}
 
 	// Try to load the new file and copy the pins over if successful
 	newStore, err := Load(file.Name())
 	if err != nil {
+        fmt.Printf("pinstore: could not parse PINs: %s\n", err)
+        lastSyncState = false
+        go indicateSyncFail(fe)
 		return
 	}
 
@@ -109,6 +140,15 @@ func (ps *Pinstore) Update(url string) (err error) {
 
 	// Then rename the new file to the old name
 	err = os.Rename(file.Name(), ps.filename)
+	if err != nil {
+        fmt.Printf("pinstore: could not make new PINs effective: %s\n", err)
+        lastSyncState = false
+        go indicateSyncFail(fe)
+		return
+	}
+
+    lastSyncState = true
+    fmt.Printf("pinstore: pinsync successful\n")
 
 	return
 }
