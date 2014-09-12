@@ -20,6 +20,7 @@ import (
     "pinpad-controller/frontend"
 )
 
+var syncFailIndicatorRunning = false
 var lastSyncState bool = false
 var lastChecksum []byte
 
@@ -68,8 +69,13 @@ func Load(filename string) (*Pinstore, error) {
 }
 
 func indicateSyncFail(fe *frontend.Frontend) {
+    if (syncFailIndicatorRunning == true) {
+        return
+    }
+    syncFailIndicatorRunning = true
     for {
         if (lastSyncState == true) {
+            syncFailIndicatorRunning = false
             return;
         }
         fe.LED(2, 1000)
@@ -85,6 +91,8 @@ func (ps *Pinstore) Update(url string, fe *frontend.Frontend) (err error) {
 	resp, err := http.Get(url)
 	if err != nil {
         fmt.Printf("pinstore: could not sync PINs: %s\n", err)
+        lastSyncState = false
+        go indicateSyncFail(fe)
 		return
 	}
 	defer resp.Body.Close()
@@ -100,7 +108,7 @@ func (ps *Pinstore) Update(url string, fe *frontend.Frontend) (err error) {
         fmt.Printf("pinstore: could not sync PINs: %s\n", err)
         lastSyncState = false
         go indicateSyncFail(fe)
-		return
+        return
 	}
 
 	if bytes.Compare(checksum.Sum(nil), lastChecksum) == 0 {
