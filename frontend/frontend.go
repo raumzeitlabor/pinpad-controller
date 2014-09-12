@@ -42,7 +42,7 @@ func OpenFrontendish(ttyish uart.TTYish) *Frontend {
 }
 
 func OpenFrontend(path string) (frontend *Frontend, err error) {
-	ttyish, e := uart.OpenTTY(path, uart.B38400)
+	ttyish, e := uart.OpenTTY(path, uart.B9600)
 	if e != nil {
 		return nil, e
 	}
