@@ -46,7 +46,18 @@ func OpenFrontend(path string) (frontend *Frontend, err error) {
 	if e != nil {
 		return nil, e
 	}
+	doorStateWatcher()
 	return OpenFrontendish(ttyish), nil
+}
+
+func doorStateWatcher() {
+// Check door state and provide debug info
+	go func() {
+		for {
+			time.Sleep(1 * time.Second)
+			//fmt.Printf("doorStateWatcher watches the door's state\n")
+		}
+	}()
 }
 
 // readAndPing takes care of reading bytes, filling a buffer and then sending
