@@ -1,0 +1,18 @@
+[Unit]
+Description=brings up network interfaces
+Before=network.target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ifconfig lo up
+ExecStart=/sbin/ifconfig eth0 up
+ExecStart=/sbin/ifconfig wlan2 up
+ExecStart=/bin/ip a a 172.22.36.15 dev eth0
+ExecStart=/bin/ip r a 172.22.36.0/23 dev eth0
+ExecStart=/bin/ip r a default via 172.22.36.1 dev eth0
+ExecStart=/bin/ip a a 10.42.23.1 dev wlan2
+ExecStart=/bin/ip r a 10.42.23.0/24 dev wlan2
+
+[Install]
+WantedBy=multi-user.target
