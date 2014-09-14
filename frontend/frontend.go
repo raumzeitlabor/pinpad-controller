@@ -26,6 +26,7 @@ const (
 type Frontend struct {
 	tty        uart.TTYish
 	Keypresses chan KeyPressEvent
+	IgnoreKeypress bool
 }
 
 type KeyPressEvent struct {
@@ -132,7 +133,9 @@ func (fe *Frontend) readAndPing() {
 			} else if strings.HasPrefix(packet, "^PAD ") {
 				var event KeyPressEvent
 				event.Key = string(receiveBuffer.Bytes()[5])
-				fe.Keypresses <- event
+				if ! fe.IgnoreKeypress {
+					fe.Keypresses <- event
+				}
 			}
 			receiveBuffer.Reset()
 

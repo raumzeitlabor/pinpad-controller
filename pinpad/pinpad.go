@@ -19,12 +19,14 @@ func invalidPin(pin string, fe *frontend.Frontend) {
 	fe.LcdSet("Invalid PIN!")
 	fe.LED(2, 3000)
 	go func() {
+		fe.IgnoreKeypress = true
 		time.Sleep(2 * time.Second)
 		if tuerstatus.CurrentStatus().Open {
 			fe.LcdSet(" \nOpen")
 		} else {
 			fe.LcdSet(" \nClosed")
 		}
+		fe.IgnoreKeypress = false
 	}()
 }
 
