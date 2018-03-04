@@ -1,0 +1,12 @@
+[Unit]
+Description=Tuer SSH daemon
+After=time-sync.target
+Requires=pinpad-fixperms.service
+
+[Service]
+ExecStart=/usr/local/bin/tuersshd -privkey=/home/tuersshd/.ssh/id_rsa
+User=tuersshd
+StandardOutput=syslog
+
+[Install]
+WantedBy=multi-user.target

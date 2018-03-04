@@ -1,0 +1,14 @@
+[Unit]
+Description=Fix permissions of tuer ctrl sock
+After=pinpad-controller.service
+Requires=pinpad-controller.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sleep 5
+ExecStart=/bin/chgrp tuersshd /tmp/pinpad-ctrl.sock
+ExecStart=/bin/chmod g+w /tmp/pinpad-ctrl.sock
+StandardOutput=syslog
+
+[Install]
+WantedBy=multi-user.target

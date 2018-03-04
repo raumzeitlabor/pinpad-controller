@@ -1,0 +1,10 @@
+[Unit]
+Description=Pinpad Controller
+After=networking.target
+
+[Service]
+ExecStart=/usr/local/bin/pinpad-controller -pin_url=https://user:pass@server/BenutzerDB/pins/location
+StandardOutput=syslog
+
+[Install]
+WantedBy=multi-user.target
